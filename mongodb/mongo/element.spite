@@ -43,16 +43,16 @@ func to_string(): String {
         return "ObjectId(\"{text}\")"
     }
     if kind == 1 {
-        return "{decimal}"
+        return decimal
     }
     if kind == 8 {
-        return "{boolean}"
+        return boolean
     }
     if kind == 9 {
         return "Date({whole})"
     }
     if kind == 16 or kind == 18 {
-        return "{whole}"
+        return whole
     }
     if kind == 10 {
         return "null"

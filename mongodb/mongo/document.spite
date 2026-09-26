@@ -75,32 +75,32 @@ func set_array(key: String, value: Mongo.Document) {
 }
 
 func append_text(value: String) {
-    var key = "{elements.count()}"
+    var key = elements.count().to_string()
     set_text(key, value)
 }
 
 func append_integer(value: Integer) {
-    var key = "{elements.count()}"
+    var key = elements.count().to_string()
     set_integer(key, value)
 }
 
 func append_long(value: Long) {
-    var key = "{elements.count()}"
+    var key = elements.count().to_string()
     set_long(key, value)
 }
 
 func append_double(value: Double) {
-    var key = "{elements.count()}"
+    var key = elements.count().to_string()
     set_double(key, value)
 }
 
 func append_boolean(value: Boolean) {
-    var key = "{elements.count()}"
+    var key = elements.count().to_string()
     set_boolean(key, value)
 }
 
 func append_document(value: Mongo.Document) {
-    var key = "{elements.count()}"
+    var key = elements.count().to_string()
     set_document(key, value)
 }
 
