@@ -1,0 +1,151 @@
+var console = Console()
+
+func MongodbProbe() {
+    load "../mongodb"
+    var bson_safe = check_malformed_bson()
+    crash bson_safe
+    var client = Mongo.Client("127.0.0.1", 27017)
+    var connected = client.connect()
+    crash connected
+    var collection = client.collection("mongodb_probe", "players")
+    var players = Mongo.TypedCollection<Player>(collection)
+    var typed_passed = check_typed(players)
+    crash typed_passed
+    var documents_passed = check_documents(players)
+    crash documents_passed
+    var errors_passed = check_errors(client)
+    crash errors_passed
+    show_account(client)
+    var dropped = client.drop_database("mongodb_probe")
+    crash dropped
+    console.print("passed", true)
+}
+
+func check_malformed_bson(): Boolean {
+    var bson = Mongo.Bson()
+    var original = Mongo.Document()
+    original.set_text("name", "probe")
+    original.set_integer("count", 3)
+    var bytes = Mongo.Bytes()
+    bson.encode(original, bytes)
+    var decoded = bson.decode(bytes)
+    crash decoded
+    crash decoded.text_of("name") == "probe"
+    var truncated = Mongo.Bytes()
+    truncated.write_bytes(bytes.address, 10)
+    var broken = bson.decode(truncated)
+    var lying = Mongo.Bytes()
+    lying.write_integer(1000)
+    lying.write_byte(2)
+    lying.write_byte(0)
+    var liar = bson.decode(lying)
+    var broken_read = is_present(broken)
+    var liar_read = is_present(liar)
+    console.print("bson round trip", decoded, "truncated read", broken_read, "lying size read", liar_read)
+    return not broken_read and not liar_read
+}
+
+func check_typed(players: Mongo.TypedCollection<Player>): Boolean {
+    var hero = Player()
+    hero.name = "Ada"
+    hero.level = 3
+    hero.gold = 5000000000
+    hero.alive = true
+    hero.position.horizontal = 1.5
+    hero.position.vertical = -2.25
+    hero.tags.append("knight")
+    hero.tags.append("brave")
+    var inserted = players.insert_one(hero)
+    crash inserted
+    console.print("inserted id", hero.id)
+    var filter = Mongo.Document()
+    filter.set_text("name", "Ada")
+    var found = players.find_one(filter)
+    crash found
+    var found_tags = found.tags.join(",")
+    console.print(
+        "found",
+        found.id,
+        found.name,
+        found.level,
+        found.gold,
+        found.alive,
+        found.position.horizontal,
+        found.position.vertical,
+        found_tags,
+    )
+    crash found.id == hero.id and found.gold == 5000000000 and found.position.vertical == -2.25 and found.tags.count() == 2
+    var changes = Mongo.Document()
+    changes.set_integer("level", 7)
+    var update = Mongo.Document()
+    update.set_document("$set", changes)
+    var modified = players.update_one(filter, update)
+    crash modified == 1
+    var updated = players.find_one(filter)
+    crash updated
+    console.print("updated level", updated.level)
+    return updated.level == 7
+}
+
+func check_documents(players: Mongo.TypedCollection<Player>): Boolean {
+    var extra = Mongo.Document()
+    extra.set_text("name", "Bo")
+    extra.set_integer("level", 1)
+    extra.set_double("score", 12.5)
+    extra.set_null("guild")
+    var inserted = players.collection.insert_one(extra)
+    crash inserted
+    var everything = Mongo.Document()
+    var total = players.count_matching(everything)
+    console.print("count", total)
+    players.collection.batch_size = 1
+    var everyone = players.find(everything)
+    var names = everyone.map_name()
+    var joined = names.join(", ")
+    console.print("find all", joined)
+    var raw_documents = players.collection.find(everything)
+    var last_document = raw_documents.last()
+    crash last_document
+    console.print("raw", last_document)
+    var ada = Mongo.Document()
+    ada.set_text("name", "Ada")
+    var deleted_one = players.delete_one(ada)
+    var deleted_many = players.delete_many(everything)
+    var left = players.count_matching(everything)
+    console.print("deleted", deleted_one, deleted_many, "left", left)
+    return total == 2 and everyone.count() == 2 and deleted_one == 1 and deleted_many == 1 and left == 0
+}
+
+func show_account(client: Mongo.Client) {
+    var accounts = client.collection("spite_kal", "accounts")
+    var nothing = Mongo.Document()
+    var account = accounts.find_one(nothing)
+    if account {
+        var keys = account.keys()
+        var joined = keys.join(", ")
+        console.print("spite_kal.accounts keys", joined)
+    } else {
+        console.print("spite_kal.accounts has no document", client.error)
+    }
+}
+
+func is_present(document: Mongo.Document?): Boolean {
+    assert document
+    return true
+}
+
+func check_errors(client: Mongo.Client): Boolean {
+    var scratch = client.collection("mongodb_probe", "errors")
+    var twin = Mongo.Document()
+    twin.set_text("_id", "twin")
+    var first_inserted = scratch.insert_one(twin)
+    var second_inserted = scratch.insert_one(twin)
+    var duplicate_error = client.error
+    var unknown = Mongo.Document()
+    unknown.set_integer("noSuchCommand", 1)
+    var answer = client.run_command("mongodb_probe", unknown)
+    var unknown_answered = is_present(answer)
+    console.print("duplicate insert", second_inserted, duplicate_error)
+    console.print("unknown command", unknown_answered, client.error)
+    return first_inserted and not second_inserted and duplicate_error.contains("duplicate key") and not unknown_answered
+}

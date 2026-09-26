@@ -1,0 +1,7 @@
+var id = ""
+var name = ""
+var level = 1
+var gold: Long = 0
+var alive = true
+var position = Position()
+var tags = List<String>()
