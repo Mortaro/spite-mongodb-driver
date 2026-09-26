@@ -1,6 +1,6 @@
 var raw = Raw()
 var bson = Mongo.Bson()
-var socket = Socket()
+var idle = List<Socket>()
 var host = "127.0.0.1"
 var port = 27017
 var connected = false
@@ -14,17 +14,37 @@ func Client(new_host: String, new_port: Integer) {
 }
 
 func connect(): Boolean {
-    socket.close()
-    connected = socket.connect(host, port)
-    if not connected {
-        error = "could not connect to {host}:{port}"
+    var opened = open_connection()
+    connected = false
+    if opened {
+        idle.append(opened)
+        connected = true
     }
     return connected
 }
 
 func close() {
-    socket.close()
+    idle.each_close()
+    idle.clear()
     connected = false
+}
+
+func open_connection(): Socket? {
+    var fresh = Socket()
+    var opened = fresh.connect(host, port)
+    if not opened {
+        error = "could not connect to {host}:{port}"
+    }
+    assert opened
+    return fresh
+}
+
+func take_connection(): Socket? {
+    var reused = idle.remove_last()
+    if reused {
+        return reused
+    }
+    return open_connection()
 }
 
 func collection(database: String, name: String): Mongo.Collection {
@@ -78,17 +98,20 @@ func write_error(reply: Mongo.Document): String {
 }
 
 func exchange(database: String, command: Mongo.Document): Mongo.Document? {
-    if not connected {
-        connect()
-    }
-    assert connected
+    var connection = take_connection()
+    assert connection
     var message = request(database, command)
-    var sent = socket.write_bytes(message.address, message.length)
+    var sent_id = raw.read_integer(message.address, 4)
+    var sent = connection.write_bytes(message.address, message.length)
     if not sent {
-        lose("could not send the command to {host}:{port}")
+        lose(connection, "could not send the command to {host}:{port}")
     }
     assert sent
-    return receive()
+    var reply = receive(connection, sent_id)
+    if reply {
+        idle.append(connection)
+    }
+    return reply
 }
 
 func request(database: String, command: Mongo.Document): Mongo.Bytes {
@@ -108,32 +131,36 @@ func request(database: String, command: Mongo.Document): Mongo.Bytes {
     return message
 }
 
-func receive(): Mongo.Document? {
+func receive(connection: Socket, sent_id: Integer): Mongo.Document? {
     var reply = Mongo.Bytes()
     reply.reserve(16)
-    var header_read = read_exactly(reply.address, 16)
+    var header_read = read_exactly(connection, reply.address, 16)
     if not header_read {
-        lose("the server closed the connection")
+        lose(connection, "the server closed the connection")
     }
     assert header_read
     var size = raw.read_integer(reply.address, 0)
     var response_to = raw.read_integer(reply.address, 8)
     var operation = raw.read_integer(reply.address, 12)
-    var expected = size >= 26 and size <= reply_limit and response_to == request_id and operation == 2013
+    var expected = size >= 26 and size <= reply_limit and response_to == sent_id and operation == 2013
     if not expected {
-        lose("the server sent an unexpected reply")
+        lose(connection, "the server sent an unexpected reply")
     }
     assert expected
     reply.reserve(size)
     var body_at = reply.address + 16
-    var body_read = read_exactly(body_at, size - 16)
+    var body_read = read_exactly(connection, body_at, size - 16)
     if not body_read {
-        lose("the server closed the connection")
+        lose(connection, "the server closed the connection")
     }
     assert body_read
     reply.length = size
     reply.position = 16
-    return reply_body(reply)
+    var document = reply_body(reply)
+    if not document {
+        connection.close()
+    }
+    return document
 }
 
 func reply_body(reply: Mongo.Bytes): Mongo.Document? {
@@ -141,32 +168,31 @@ func reply_body(reply: Mongo.Bytes): Mongo.Document? {
     reply.read_integer()
     var kind = reply.read_byte()
     if kind != 0 {
-        lose("the reply has no body section")
+        error = "the reply has no body section"
     }
     assert kind == 0
     var document = bson.decode(reply)
     if not document {
-        lose("the reply is not valid BSON")
+        error = "the reply is not valid BSON"
     }
     return document
 }
 
-func read_exactly(address: Long, count: Integer): Boolean {
+func read_exactly(connection: Socket, address: Long, count: Integer): Boolean {
     var done = 0
-    while done < count and not socket.closed {
+    while done < count and not connection.closed {
         var at = address + done
-        var received = socket.read_bytes(at, count - done)
+        var received = connection.read_bytes(at, count - done)
         done = done + received
     }
     return done == count
 }
 
-func lose(reason: String) {
+func lose(connection: Socket, reason: String) {
     error = reason
-    connected = false
-    socket.close()
+    connection.close()
 }
 
 func drop() {
-    socket.close()
+    close()
 }
