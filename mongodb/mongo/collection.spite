@@ -10,7 +10,9 @@ func insert_one(document: Mongo.Document): Boolean {
     command.set_text("insert", name)
     command.set_array("documents", documents)
     var reply = client.run_command(database, command)
-    assert reply
+    if not reply {
+        return false
+    }
     return reply.integer_of("n") == 1
 }
 
@@ -56,11 +58,17 @@ func ask_batch_size(command: Mongo.Document) {
 }
 
 func take_batch(reply: Mongo.Document?, batch_name: String, found: List<Mongo.Document>): Long {
-    assert reply
+    if not reply {
+        return 0
+    }
     var cursor = reply.document_of("cursor")
-    assert cursor
+    if not cursor {
+        return 0
+    }
     var batch = cursor.document_of(batch_name)
-    assert batch
+    if not batch {
+        return 0
+    }
     var index = 0
     while index < batch.elements.count() {
         var element = batch.elements[index]
@@ -91,7 +99,9 @@ func update_matching(filter: Mongo.Document, update: Mongo.Document, every: Bool
     command.set_text("update", name)
     command.set_array("updates", updates)
     var reply = client.run_command(database, command)
-    assert reply
+    if not reply {
+        return 0
+    }
     return reply.integer_of("nModified")
 }
 
@@ -113,7 +123,9 @@ func delete_matching(filter: Mongo.Document, limit: Integer): Integer {
     command.set_text("delete", name)
     command.set_array("deletes", deletes)
     var reply = client.run_command(database, command)
-    assert reply
+    if not reply {
+        return 0
+    }
     return reply.integer_of("n")
 }
 
@@ -122,6 +134,8 @@ func count_matching(filter: Mongo.Document): Integer {
     command.set_text("count", name)
     command.set_document("query", filter)
     var reply = client.run_command(database, command)
-    assert reply
+    if not reply {
+        return 0
+    }
     return reply.integer_of("n")
 }

@@ -36,35 +36,25 @@ func as_double(): Double {
 }
 
 func to_string(): String {
-    if kind == 2 {
-        return "\"{text}\""
+    switch kind {
+        2: return "\"{text}\""
+        7: return "ObjectId(\"{text}\")"
+        1: return decimal
+        8: return boolean
+        9: return "Date({whole})"
+        16: return whole
+        18: return whole
+        10: return "null"
+        3: return embedded_text()
+        4: return embedded_text()
+        _: return "<type {kind}>"
     }
-    if kind == 7 {
-        return "ObjectId(\"{text}\")"
-    }
-    if kind == 1 {
-        return decimal
-    }
-    if kind == 8 {
-        return boolean
-    }
-    if kind == 9 {
-        return "Date({whole})"
-    }
-    if kind == 16 or kind == 18 {
-        return whole
-    }
-    if kind == 10 {
-        return "null"
-    }
-    if kind == 3 or kind == 4 {
-        return embedded_text()
-    }
-    return "<type {kind}>"
 }
 
 func embedded_text(): String {
-    assert document
+    if not document {
+        return ""
+    }
     var shown = document
     if kind == 4 {
         return shown.array_text()

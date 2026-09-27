@@ -157,7 +157,9 @@ func read_key(bytes: Mongo.Bytes, end: Integer): String {
     if index >= end {
         bytes.failed = true
     }
-    assert index < end
+    if index >= end {
+        return ""
+    }
     var text = raw.text(bytes.address + start, index - start)
     bytes.position = index + 1
     return text
@@ -169,7 +171,9 @@ func read_string(bytes: Mongo.Bytes): String {
     if not valid {
         bytes.failed = true
     }
-    assert valid
+    if not valid {
+        return ""
+    }
     var text = raw.text(bytes.address + bytes.position, size - 1)
     var terminator_at = bytes.position + size - 1
     bytes.position = bytes.position + size
@@ -186,7 +190,9 @@ func read_embedded(bytes: Mongo.Bytes, element: Mongo.Element, depth: Integer) {
 }
 
 func read_object_id(bytes: Mongo.Bytes): String {
-    assert bytes.fits(12)
+    if not bytes.fits(12) {
+        return ""
+    }
     var pieces = List<String>()
     var index = 0
     while index < 12 {
@@ -246,7 +252,9 @@ func prefixed_size(bytes: Mongo.Bytes, kind: Integer): Integer {
 }
 
 func peek_integer(bytes: Mongo.Bytes): Integer {
-    assert bytes.fits(4)
+    if not bytes.fits(4) {
+        return 0
+    }
     return raw.read_integer(bytes.address, bytes.position)
 }
 

@@ -14,7 +14,9 @@ func digit_value(code: Integer): Integer {
 }
 
 func is_object_id(text: String): Boolean {
-    assert text.length() == 24
+    if text.length() != 24 {
+        return false
+    }
     var index = 0
     var valid = true
     while index < 24 and valid {

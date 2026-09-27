@@ -110,7 +110,9 @@ func find(key: String): Mongo.Element? {
 
 func has(key: String): Boolean {
     var found = find(key)
-    assert found
+    if not found {
+        return false
+    }
     return true
 }
 
@@ -124,32 +126,42 @@ func keys(): List<String> {
 
 func text_of(key: String): String {
     var found = find(key)
-    assert found
+    if not found {
+        return ""
+    }
     return found.text
 }
 
 func integer_of(key: String): Integer {
     var found = find(key)
-    assert found
+    if not found {
+        return 0
+    }
     var number: Integer = found.as_long()
     return number
 }
 
 func long_of(key: String): Long {
     var found = find(key)
-    assert found
+    if not found {
+        return 0
+    }
     return found.as_long()
 }
 
 func double_of(key: String): Double {
     var found = find(key)
-    assert found
+    if not found {
+        return 0.0
+    }
     return found.as_double()
 }
 
 func boolean_of(key: String): Boolean {
     var found = find(key)
-    assert found
+    if not found {
+        return false
+    }
     return found.boolean
 }
 

@@ -64,13 +64,13 @@ func read_optional(element: Mongo.Element): $field_type {
 }
 
 func read_list(element: Mongo.Element): $field_type {
-    assert element.document
+    crash element.document
     var list_mapping = Mongo.ListMapping<$field_type>()
     return list_mapping.from_document(element.document)
 }
 
 func read_class(element: Mongo.Element): $field_type {
-    assert element.document
+    crash element.document
     var codec = Mongo.Codec<$field_type>()
     return codec.from_document(element.document)
 }

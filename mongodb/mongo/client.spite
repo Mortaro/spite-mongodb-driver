@@ -59,7 +59,9 @@ func drop_database(database: String): Boolean {
     var command = Mongo.Document()
     command.set_integer("dropDatabase", 1)
     var reply = run_command(database, command)
-    assert reply
+    if not reply {
+        return false
+    }
     return true
 }
 
@@ -90,10 +92,16 @@ func reply_error(reply: Mongo.Document): String {
 
 func write_error(reply: Mongo.Document): String {
     var write_errors = reply.document_of("writeErrors")
-    assert write_errors
+    if not write_errors {
+        return ""
+    }
     var first = write_errors.elements.first()
-    assert first
-    assert first.document
+    if not first {
+        return ""
+    }
+    if not first.document {
+        return ""
+    }
     return first.document.text_of("errmsg")
 }
 

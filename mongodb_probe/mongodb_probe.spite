@@ -130,7 +130,9 @@ func show_account(client: Mongo.Client) {
 }
 
 func is_present(document: Mongo.Document?): Boolean {
-    assert document
+    if not document {
+        return false
+    }
     return true
 }
 
