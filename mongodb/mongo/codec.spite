@@ -20,7 +20,7 @@ func write_attribute(attribute: Symbol<$value_type>, value: $value_type, documen
 }
 
 func from_document(document: Mongo.Document): $value_type {
-    var created: $value_type = null
+    var created: $value_type = $value_type()
     read_attributes(created, document)
     return created
 }
