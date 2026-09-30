@@ -18,12 +18,12 @@ func insert_one(value: $value_type): Boolean {
 func find_one(filter: Mongo.Document): $value_type? {
     var found = collection.find_one(filter)
     assert found
-    return codec.from_document(found)
+    return codec.to_value(found)
 }
 
 func find(filter: Mongo.Document): List<$value_type> {
     var documents = collection.find(filter)
-    return documents.map(codec.from_document)
+    return documents.map(codec.to_value)
 }
 
 func update_one(filter: Mongo.Document, update: Mongo.Document): Integer {

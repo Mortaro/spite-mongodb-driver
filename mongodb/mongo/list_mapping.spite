@@ -13,7 +13,7 @@ func to_document(value: $list_type): Mongo.Document {
     return document
 }
 
-func from_document(document: Mongo.Document): $list_type {
+func to_list(document: Mongo.Document): $list_type {
     var list: $list_type = $list_type()
     var mapping = Mongo.Mapping<$list_type.element_type>()
     var index = 0
