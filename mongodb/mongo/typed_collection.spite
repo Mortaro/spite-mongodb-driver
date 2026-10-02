@@ -23,7 +23,14 @@ func find_one(filter: Mongo.Document): $value_type? {
 
 func find(filter: Mongo.Document): List<$value_type> {
     var documents = collection.find(filter)
-    return documents.map(codec.to_value)
+    var values = List<$value_type>()
+    var index = 0
+    while index < documents.count() {
+        var value = codec.to_value(documents[index])
+        values.append(value)
+        index = index + 1
+    }
+    return values
 }
 
 func update_one(filter: Mongo.Document, update: Mongo.Document): Integer {

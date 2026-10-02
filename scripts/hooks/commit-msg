@@ -23,11 +23,14 @@ if printf '%s\n' "$message" | grep -q -F -e "$em_dash" -e "$stand_in"; then
 End the sentence, or use a colon, a comma or parentheses."
 fi
 
-# One gitmoji (one emoji, perhaps with a variation selector), one space, then a lowercase summary.
-emoji=$(printf '%s' "$summary" | LC_ALL=C.UTF-8 sed -n 's/^\([^ a-zA-Z0-9]\{1,\}\) [a-z].*$/\1/p')
+# One gitmoji (one emoji, perhaps with a variation selector), one space, then a lowercase summary. Checked on bytes,
+# so it holds where no UTF-8 locale is installed (Git for Windows has none named C.UTF-8).
+emoji="${summary%% *}"
+rest="${summary#* }"
 variation_selector=$(printf '\357\270\217')
-bare=$(printf '%s' "$emoji" | sed "s/$variation_selector//g")
-if [ -z "$emoji" ] || printf '%s' "$emoji" | grep -q '[[:punct:]]' || [ "$(printf '%s' "$bare" | LC_ALL=C.UTF-8 wc -m)" -ne 1 ]; then
+bare=$(printf '%s' "$emoji" | LC_ALL=C sed "s/$variation_selector//g")
+characters=$(printf '%s' "$bare" | LC_ALL=C tr -d '\200-\277' | LC_ALL=C wc -c)
+if [ -z "$emoji" ] || [ "$emoji" = "$summary" ] || printf '%s' "$emoji" | LC_ALL=C grep -q '[ -~]'     || [ "$characters" -ne 1 ] || ! printf '%s' "$rest" | LC_ALL=C grep -q '^[a-z]'; then
     reject "the summary is not one gitmoji and a lowercase summary" "Write it as:
 
     🐛 fix the reply size check"

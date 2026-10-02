@@ -172,7 +172,7 @@ func document_of(key: String): Mongo.Document? {
 }
 
 func to_string(): String {
-    var pieces = elements.map(entry_text)
+    var pieces = elements.map_entry_texts()
     var joined = pieces.join(", ")
     return "\{{joined}}"
 }
@@ -181,8 +181,4 @@ func array_text(): String {
     var pieces = elements.map_to_strings()
     var joined = pieces.join(", ")
     return "[{joined}]"
-}
-
-func entry_text(element: Mongo.Element): String {
-    return "{element.key}: {element}"
 }

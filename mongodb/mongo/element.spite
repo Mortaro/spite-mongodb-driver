@@ -35,6 +35,10 @@ func as_double(): Double {
     return converted
 }
 
+func get_entry_text(): String {
+    return "{key}: {this}"
+}
+
 func to_string(): String {
     switch kind {
         2: return "\"{text}\""
