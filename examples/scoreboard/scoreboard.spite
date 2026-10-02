@@ -1,0 +1,34 @@
+var console = Console()
+
+func Scoreboard() {
+    load "../../mongodb"
+    var client = Mongo.Client("127.0.0.1", 27017)
+    var connected = client.connect()
+    crash connected
+    var collection = client.collection("scoreboard_example", "scores")
+    var scores = Mongo.TypedCollection<Score>(collection)
+    var ada = Score()
+    ada.player = "Ada"
+    ada.points = 120
+    var bo = Score()
+    bo.player = "Bo"
+    bo.points = 80
+    var inserted = scores.insert_one(ada) and scores.insert_one(bo)
+    crash inserted
+    var filter = Mongo.Document()
+    filter.put_text("player", "Bo")
+    var changes = Mongo.Document()
+    changes.put_integer("points", 95)
+    var update = Mongo.Document()
+    update.put_document("$set", changes)
+    var modified = scores.update_one(filter, update)
+    crash modified == 1
+    var everyone = Mongo.Document()
+    var all_scores = scores.find(everyone)
+    var players = all_scores.map_players()
+    var total = all_scores.sum_points()
+    var names = players.join(", ")
+    console.print(names, "scored", total)
+    var dropped = client.drop_database("scoreboard_example")
+    crash dropped
+}

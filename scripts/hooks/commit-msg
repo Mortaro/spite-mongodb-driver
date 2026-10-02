@@ -1,25 +1,44 @@
 #!/bin/bash
-# Every commit names the model that wrote it, so a bad change has an owner.
-# Enforced rather than documented, as in the Spite language repository.
+# Every commit reads like the Spite language repository's: one gitmoji, a lowercase imperative summary, and the
+# model that wrote it, so a bad change has an owner. Enforced rather than documented.
 
 message_file="$1"
 
-if grep -qiE '^Co-authored-by: .+ <.+@.+>' "$message_file"; then
-    exit 0
+# Only the message counts: git's own comment lines and anything below the scissors line are dropped first.
+message=$(sed -e '/^# -\{8,\} >8 -\{8,\}$/,$d' -e '/^#/d' "$message_file")
+summary=$(printf '%s\n' "$message" | sed -n '/[^[:space:]]/{p;q;}')
+
+reject() {
+    printf '\n  commit rejected: %s\n\n' "$1" >&2
+    printf '%s\n' "$2" | sed 's/^/  /' >&2
+    printf '\n' >&2
+    exit 1
+}
+
+# No em dashes, not the character and not two hyphens between spaces.
+em_dash=$(printf '\342\200\224')
+stand_in=' -''- '   # written in two pieces so this file does not contain what it refuses
+if printf '%s\n' "$message" | grep -q -F -e "$em_dash" -e "$stand_in"; then
+    reject "the message has an em dash" "Not the character, and not two hyphens between spaces standing in for one.
+End the sentence, or use a colon, a comma or parentheses."
 fi
 
-cat >&2 <<'ERROR'
+# One gitmoji (one emoji, perhaps with a variation selector), one space, then a lowercase summary.
+emoji=$(printf '%s' "$summary" | LC_ALL=C.UTF-8 sed -n 's/^\([^ a-zA-Z0-9]\{1,\}\) [a-z].*$/\1/p')
+variation_selector=$(printf '\357\270\217')
+bare=$(printf '%s' "$emoji" | sed "s/$variation_selector//g")
+if [ -z "$emoji" ] || printf '%s' "$emoji" | grep -q '[[:punct:]]' || [ "$(printf '%s' "$bare" | LC_ALL=C.UTF-8 wc -m)" -ne 1 ]; then
+    reject "the summary is not one gitmoji and a lowercase summary" "Write it as:
 
-  commit rejected: no Co-authored-by trailer
+    🐛 fix the reply size check"
+fi
 
-  Every commit ends with the model that wrote it:
+if ! grep -qE '^Co-authored-by: .+ <.+@.+>' "$message_file"; then
+    reject "no Co-authored-by trailer" "Every commit ends with the model that wrote it:
 
-      Co-authored-by: Claude Opus 5 <noreply@anthropic.com>
+    Co-authored-by: Claude Opus 5.5 <noreply@anthropic.com>
 
-  Name the model you are actually running as, not just "Claude". A human
-  committing by hand writes their own:
-
-      Co-authored-by: Mortaro <christian.mortaro@gmail.com>
-
-ERROR
-exit 1
+Name the model you are actually running as, not just \"Claude\". A human
+committing by hand writes their own."
+fi
+exit 0
