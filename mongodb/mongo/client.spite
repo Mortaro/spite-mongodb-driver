@@ -57,7 +57,7 @@ func collection(database: String, name: String): Mongo.Collection {
 
 func drop_database(database: String): Boolean {
     var command = Mongo.Document()
-    command.set_integer("dropDatabase", 1)
+    command.put_integer("dropDatabase", 1)
     var reply = run_command(database, command)
     if not reply {
         return false
@@ -125,7 +125,7 @@ func exchange(database: String, command: Mongo.Document): Mongo.Document? {
 func request(database: String, command: Mongo.Document): Mongo.Bytes {
     var body = Mongo.Document()
     body.elements = command.elements.copy()
-    body.set_text("$db", database)
+    body.put_text("$db", database)
     var message = Mongo.Bytes()
     request_id = request_id + 1
     message.write_integer(0)

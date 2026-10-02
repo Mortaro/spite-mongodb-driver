@@ -7,8 +7,8 @@ func insert_one(document: Mongo.Document): Boolean {
     var documents = Mongo.Document()
     documents.append_document(document)
     var command = Mongo.Document()
-    command.set_text("insert", name)
-    command.set_array("documents", documents)
+    command.put_text("insert", name)
+    command.put_array("documents", documents)
     var reply = client.run_command(database, command)
     if not reply {
         return false
@@ -18,10 +18,10 @@ func insert_one(document: Mongo.Document): Boolean {
 
 func find_one(filter: Mongo.Document): Mongo.Document? {
     var command = Mongo.Document()
-    command.set_text("find", name)
-    command.set_document("filter", filter)
-    command.set_integer("limit", 1)
-    command.set_boolean("singleBatch", true)
+    command.put_text("find", name)
+    command.put_document("filter", filter)
+    command.put_integer("limit", 1)
+    command.put_boolean("singleBatch", true)
     var reply = client.run_command(database, command)
     assert reply
     var cursor = reply.document_of("cursor")
@@ -36,15 +36,15 @@ func find_one(filter: Mongo.Document): Mongo.Document? {
 func find(filter: Mongo.Document): List<Mongo.Document> {
     var found = List<Mongo.Document>()
     var command = Mongo.Document()
-    command.set_text("find", name)
-    command.set_document("filter", filter)
+    command.put_text("find", name)
+    command.put_document("filter", filter)
     ask_batch_size(command)
     var reply = client.run_command(database, command)
     var cursor_id = take_batch(reply, "firstBatch", found)
     while cursor_id != 0 {
         var more = Mongo.Document()
-        more.set_long("getMore", cursor_id)
-        more.set_text("collection", name)
+        more.put_long("getMore", cursor_id)
+        more.put_text("collection", name)
         ask_batch_size(more)
         var next_reply = client.run_command(database, more)
         cursor_id = take_batch(next_reply, "nextBatch", found)
@@ -54,7 +54,7 @@ func find(filter: Mongo.Document): List<Mongo.Document> {
 
 func ask_batch_size(command: Mongo.Document) {
     assert batch_size > 0
-    command.set_integer("batchSize", batch_size)
+    command.put_integer("batchSize", batch_size)
 }
 
 func take_batch(reply: Mongo.Document?, batch_name: String, found: List<Mongo.Document>): Long {
@@ -90,14 +90,14 @@ func update_many(filter: Mongo.Document, update: Mongo.Document): Integer {
 
 func update_matching(filter: Mongo.Document, update: Mongo.Document, every: Boolean): Integer {
     var statement = Mongo.Document()
-    statement.set_document("q", filter)
-    statement.set_document("u", update)
-    statement.set_boolean("multi", every)
+    statement.put_document("q", filter)
+    statement.put_document("u", update)
+    statement.put_boolean("multi", every)
     var updates = Mongo.Document()
     updates.append_document(statement)
     var command = Mongo.Document()
-    command.set_text("update", name)
-    command.set_array("updates", updates)
+    command.put_text("update", name)
+    command.put_array("updates", updates)
     var reply = client.run_command(database, command)
     if not reply {
         return 0
@@ -115,13 +115,13 @@ func delete_many(filter: Mongo.Document): Integer {
 
 func delete_matching(filter: Mongo.Document, limit: Integer): Integer {
     var statement = Mongo.Document()
-    statement.set_document("q", filter)
-    statement.set_integer("limit", limit)
+    statement.put_document("q", filter)
+    statement.put_integer("limit", limit)
     var deletes = Mongo.Document()
     deletes.append_document(statement)
     var command = Mongo.Document()
-    command.set_text("delete", name)
-    command.set_array("deletes", deletes)
+    command.put_text("delete", name)
+    command.put_array("deletes", deletes)
     var reply = client.run_command(database, command)
     if not reply {
         return 0
@@ -131,8 +131,8 @@ func delete_matching(filter: Mongo.Document, limit: Integer): Integer {
 
 func count_matching(filter: Mongo.Document): Integer {
     var command = Mongo.Document()
-    command.set_text("count", name)
-    command.set_document("query", filter)
+    command.put_text("count", name)
+    command.put_document("query", filter)
     var reply = client.run_command(database, command)
     if not reply {
         return 0

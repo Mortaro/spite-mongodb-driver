@@ -1,4 +1,1 @@
-.spite-cache/
-*.exe
-*.pdb
-*.crashes
+.spite/

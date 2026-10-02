@@ -24,8 +24,8 @@ func MongodbProbe() {
 func check_malformed_bson(): Boolean {
     var bson = Mongo.Bson()
     var original = Mongo.Document()
-    original.set_text("name", "probe")
-    original.set_integer("count", 3)
+    original.put_text("name", "probe")
+    original.put_integer("count", 3)
     var bytes = Mongo.Bytes()
     bson.encode(original, bytes)
     var decoded = bson.decode(bytes)
@@ -59,7 +59,7 @@ func check_typed(players: Mongo.TypedCollection<Player>): Boolean {
     crash inserted
     console.print("inserted id", hero.id)
     var filter = Mongo.Document()
-    filter.set_text("name", "Ada")
+    filter.put_text("name", "Ada")
     var found = players.find_one(filter)
     crash found
     var found_tags = found.tags.join(",")
@@ -76,9 +76,9 @@ func check_typed(players: Mongo.TypedCollection<Player>): Boolean {
     )
     crash found.id == hero.id and found.gold == 5000000000 and found.position.vertical == -2.25 and found.tags.count() == 2
     var changes = Mongo.Document()
-    changes.set_integer("level", 7)
+    changes.put_integer("level", 7)
     var update = Mongo.Document()
-    update.set_document("$set", changes)
+    update.put_document("$set", changes)
     var modified = players.update_one(filter, update)
     crash modified == 1
     var updated = players.find_one(filter)
@@ -89,10 +89,10 @@ func check_typed(players: Mongo.TypedCollection<Player>): Boolean {
 
 func check_documents(players: Mongo.TypedCollection<Player>): Boolean {
     var extra = Mongo.Document()
-    extra.set_text("name", "Bo")
-    extra.set_integer("level", 1)
-    extra.set_double("score", 12.5)
-    extra.set_null("guild")
+    extra.put_text("name", "Bo")
+    extra.put_integer("level", 1)
+    extra.put_double("score", 12.5)
+    extra.put_null("guild")
     var inserted = players.collection.insert_one(extra)
     crash inserted
     var everything = Mongo.Document()
@@ -100,7 +100,7 @@ func check_documents(players: Mongo.TypedCollection<Player>): Boolean {
     console.print("count", total)
     players.collection.batch_size = 1
     var everyone = players.find(everything)
-    var names = everyone.map_name()
+    var names = everyone.map_names()
     var joined = names.join(", ")
     console.print("find all", joined)
     var raw_documents = players.collection.find(everything)
@@ -108,7 +108,7 @@ func check_documents(players: Mongo.TypedCollection<Player>): Boolean {
     crash last_document
     console.print("raw", last_document)
     var ada = Mongo.Document()
-    ada.set_text("name", "Ada")
+    ada.put_text("name", "Ada")
     var deleted_one = players.delete_one(ada)
     var deleted_many = players.delete_many(everything)
     var left = players.count_matching(everything)
@@ -139,12 +139,12 @@ func is_present(document: Mongo.Document?): Boolean {
 func check_errors(client: Mongo.Client): Boolean {
     var scratch = client.collection("mongodb_probe", "errors")
     var twin = Mongo.Document()
-    twin.set_text("_id", "twin")
+    twin.put_text("_id", "twin")
     var first_inserted = scratch.insert_one(twin)
     var second_inserted = scratch.insert_one(twin)
     var duplicate_error = client.error
     var unknown = Mongo.Document()
-    unknown.set_integer("noSuchCommand", 1)
+    unknown.put_integer("noSuchCommand", 1)
     var answer = client.run_command("mongodb_probe", unknown)
     var unknown_answered = is_present(answer)
     console.print("duplicate insert", second_inserted, duplicate_error)

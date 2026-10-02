@@ -15,60 +15,60 @@ func put(element: Mongo.Element) {
     }
 }
 
-func set_text(key: String, value: String) {
+func put_text(key: String, value: String) {
     var element = Mongo.Element(key, 2)
     element.text = value
     put(element)
 }
 
-func set_object_id(key: String, hexadecimal: String) {
+func put_object_id(key: String, hexadecimal: String) {
     var element = Mongo.Element(key, 7)
     element.text = hexadecimal
     put(element)
 }
 
-func set_integer(key: String, value: Integer) {
+func put_integer(key: String, value: Integer) {
     var element = Mongo.Element(key, 16)
     element.whole = value
     put(element)
 }
 
-func set_long(key: String, value: Long) {
+func put_long(key: String, value: Long) {
     var element = Mongo.Element(key, 18)
     element.whole = value
     put(element)
 }
 
-func set_date_time(key: String, milliseconds_since_1970: Long) {
+func put_date_time(key: String, milliseconds_since_1970: Long) {
     var element = Mongo.Element(key, 9)
     element.whole = milliseconds_since_1970
     put(element)
 }
 
-func set_double(key: String, value: Double) {
+func put_double(key: String, value: Double) {
     var element = Mongo.Element(key, 1)
     element.decimal = value
     put(element)
 }
 
-func set_boolean(key: String, value: Boolean) {
+func put_boolean(key: String, value: Boolean) {
     var element = Mongo.Element(key, 8)
     element.boolean = value
     put(element)
 }
 
-func set_null(key: String) {
+func put_null(key: String) {
     var element = Mongo.Element(key, 10)
     put(element)
 }
 
-func set_document(key: String, value: Mongo.Document) {
+func put_document(key: String, value: Mongo.Document) {
     var element = Mongo.Element(key, 3)
     element.document = value
     put(element)
 }
 
-func set_array(key: String, value: Mongo.Document) {
+func put_array(key: String, value: Mongo.Document) {
     var element = Mongo.Element(key, 4)
     element.document = value
     put(element)
@@ -76,32 +76,32 @@ func set_array(key: String, value: Mongo.Document) {
 
 func append_text(value: String) {
     var key = elements.count().to_string()
-    set_text(key, value)
+    put_text(key, value)
 }
 
 func append_integer(value: Integer) {
     var key = elements.count().to_string()
-    set_integer(key, value)
+    put_integer(key, value)
 }
 
 func append_long(value: Long) {
     var key = elements.count().to_string()
-    set_long(key, value)
+    put_long(key, value)
 }
 
 func append_double(value: Double) {
     var key = elements.count().to_string()
-    set_double(key, value)
+    put_double(key, value)
 }
 
 func append_boolean(value: Boolean) {
     var key = elements.count().to_string()
-    set_boolean(key, value)
+    put_boolean(key, value)
 }
 
 func append_document(value: Mongo.Document) {
     var key = elements.count().to_string()
-    set_document(key, value)
+    put_document(key, value)
 }
 
 func find(key: String): Mongo.Element? {
@@ -121,7 +121,7 @@ func count(): Integer {
 }
 
 func keys(): List<String> {
-    return elements.map_key()
+    return elements.map_keys()
 }
 
 func text_of(key: String): String {
@@ -178,7 +178,7 @@ func to_string(): String {
 }
 
 func array_text(): String {
-    var pieces = elements.map_to_string()
+    var pieces = elements.map_to_strings()
     var joined = pieces.join(", ")
     return "[{joined}]"
 }
