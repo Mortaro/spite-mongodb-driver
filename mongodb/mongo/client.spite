@@ -1,4 +1,4 @@
-var raw = Raw()
+var raw = Mongo.RawMemory()
 var bson = Mongo.Bson()
 var idle = List<Socket>()
 var host = "127.0.0.1"

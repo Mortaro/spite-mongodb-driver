@@ -10,7 +10,7 @@ read those first, since they are the contract this code keeps.
   - `client.spite`: sockets, OP_MSG framing (`request`, `receive`), `run_command` and `client.error`.
   - `collection.spite`, `typed_collection.spite`: the CRUD commands, plain and typed.
   - `document.spite`, `element.spite`: the ordered document; an element's `kind` is the BSON type number.
-  - `bson.spite`, `bytes.spite`, `raw.spite`: encoding and bounds-checked decoding over a growable buffer.
+  - `bson.spite`, `bytes.spite`, `raw_memory.spite`: encoding and bounds-checked decoding over a growable buffer.
   - `codec.spite`, `mapping.spite`, `list_mapping.spite`: the compile-time class to document mapping, written as
     member templates (`write_attributes`, `read_attributes`) and `$field_type` tests.
   - `object_ids.spite`, `hex.spite`: ObjectId generation and hexadecimal.
@@ -41,6 +41,8 @@ the new form; fix the driver and the docs together. Past migrations, for referen
 - One-argument `set_<name>(x)` reads as a setter (D315, D396), so the document's writers are `put_<type>`.
 - Member templates that answer every element are plural: `map_keys()`, `map_names()`.
 - No `from_` functions (D293): the codec converts with `to_document` and `to_value`.
+- A class may not hide another (D374, D387): the memory helper is `Mongo.RawMemory`, since a `Mongo.Raw` hides a
+  root `Raw` in any program that has one.
 
 Report compiler bugs to the "Language implementation review" session.
 
