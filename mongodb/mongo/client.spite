@@ -110,7 +110,10 @@ func exchange(database: String, command: Mongo.Document): Mongo.Document? {
     assert connection
     var message = request(database, command)
     var sent_id = raw.read_integer(message.address, 4)
-    var sent = connection.write_bytes(message.address, message.length)
+    var count: Long = message.length
+    var outgoing = ForeignBytes(message.address, count).read_bytes(0, message.length)
+    crash outgoing
+    var sent = connection.write_bytes(outgoing)
     if not sent {
         lose(connection, "could not send the command to {host}:{port}")
     }
@@ -141,12 +144,16 @@ func request(database: String, command: Mongo.Document): Mongo.Bytes {
 
 func receive(connection: Socket, sent_id: Integer): Mongo.Document? {
     var reply = Mongo.Bytes()
-    reply.reserve(16)
-    var header_read = read_exactly(connection, reply.address, 16)
+    var received = List<Byte>()
+    var header_read = read_at_least(connection, received, 16)
     if not header_read {
         lose(connection, "the server closed the connection")
     }
     assert header_read
+    var arrived_count = received.count()
+    var arrived: Long = arrived_count
+    reply.reserve(arrived_count)
+    ForeignBytes(reply.address, arrived).write_bytes(0, received)
     var size = raw.read_integer(reply.address, 0)
     var response_to = raw.read_integer(reply.address, 8)
     var operation = raw.read_integer(reply.address, 12)
@@ -155,13 +162,21 @@ func receive(connection: Socket, sent_id: Integer): Mongo.Document? {
         lose(connection, "the server sent an unexpected reply")
     }
     assert expected
-    reply.reserve(size)
-    var body_at = reply.address + 16
-    var body_read = read_exactly(connection, body_at, size - 16)
+    var body_read = read_at_least(connection, received, size)
     if not body_read {
         lose(connection, "the server closed the connection")
     }
     assert body_read
+    var exact = received.count() == size
+    if not exact {
+        lose(connection, "the server sent more than its reply")
+    }
+    assert exact
+    if size > reply.capacity {
+        reply.reserve(size)
+    }
+    var whole: Long = size
+    ForeignBytes(reply.address, whole).write_bytes(0, received)
     reply.length = size
     reply.position = 16
     var document = reply_body(reply)
@@ -186,14 +201,18 @@ func reply_body(reply: Mongo.Bytes): Mongo.Document? {
     return document
 }
 
-func read_exactly(connection: Socket, address: Long, count: Integer): Boolean {
-    var done = 0
-    while done < count and not connection.closed {
-        var at = address + done
-        var received = connection.read_bytes(at, count - done)
-        done = done + received
+func read_at_least(connection: Socket, received: List<Byte>, count: Integer): Boolean {
+    var open = true
+    while open and received.count() < count {
+        var arrived = connection.read_bytes()
+        if arrived {
+            var count_arrived = arrived.count()
+            received.append_bytes(arrived, 0, count_arrived)
+        } else {
+            open = false
+        }
     }
-    return done == count
+    return received.count() >= count
 }
 
 func lose(connection: Socket, reason: String) {

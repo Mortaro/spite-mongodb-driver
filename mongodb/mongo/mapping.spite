@@ -40,11 +40,9 @@ func write_optional(value: $field_type, element: Mongo.Element) {
 
 func read(element: Mongo.Element): $field_type {
     if $field_type == Integer or $field_type == Short or $field_type == Tiny or $field_type == Byte or $field_type == UnsignedShort or $field_type == Long or $field_type == UnsignedInteger {
-        var whole: $field_type = element.as_long()
-        return whole
+        return element.as_long()
     } else if $field_type == Float or $field_type == Double {
-        var decimal: $field_type = element.as_double()
-        return decimal
+        return element.as_double()
     } else if $field_type == Boolean {
         return element.boolean
     } else if $field_type == String {

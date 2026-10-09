@@ -17,8 +17,7 @@ func is_number(): Boolean {
 
 func as_long(): Long {
     if kind == 1 {
-        var rounded: Long = decimal
-        return rounded
+        return decimal
     }
     if kind == 8 and boolean {
         return 1
@@ -30,9 +29,7 @@ func as_double(): Double {
     if kind == 1 {
         return decimal
     }
-    var number = as_long()
-    var converted: Double = number
-    return converted
+    return as_long()
 }
 
 func get_entry_text(): String {

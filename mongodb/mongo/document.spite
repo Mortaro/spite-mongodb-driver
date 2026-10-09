@@ -137,8 +137,7 @@ func integer_of(key: String): Integer {
     if not found {
         return 0
     }
-    var number: Integer = found.as_long()
-    return number
+    return found.as_long()
 }
 
 func long_of(key: String): Long {

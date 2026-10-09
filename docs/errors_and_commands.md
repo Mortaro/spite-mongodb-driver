@@ -22,6 +22,7 @@ The reasons are the server's own words where it gave some (`E11000 duplicate key
 | `could not send the command to <host>:<port>` | the socket broke while writing |
 | `the server closed the connection` | the socket closed before the whole reply arrived |
 | `the server sent an unexpected reply` | the reply's header was not an answer to this command (or claimed more than 48 MB) |
+| `the server sent more than its reply` | bytes arrived past the end of the reply the header announced |
 | `the reply has no body section`, `the reply is not valid BSON` | the reply could not be read |
 | `the command failed` | the server answered `ok: 0` without a message |
 
